@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F40_41xxx,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\SYSTEM\sys;..\SYSTEM\delay;..\CORE;..\FWLIB\inc;..\SYSTEM\usart;..\USER</IncludePath>
+              <IncludePath>..\SYSTEM\sys;..\SYSTEM\delay;..\CORE;..\FWLIB\inc;..\SYSTEM\usart;..\USER;..\HARDWARE\MOTOR;..\HARDWARE\OLED;..\HARDWARE\OLED\FONTS;..\HARDWARE\I2C;..\HARDWARE\LINE</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -648,6 +648,91 @@
               <FileName>delay.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\SYSTEM\delay\delay.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>HARDWARE</GroupName>
+          <Files>
+            <File>
+              <FileName>oled.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\OLED\oled.c</FilePath>
+            </File>
+            <File>
+              <FileName>oled.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\HARDWARE\OLED\oled.h</FilePath>
+            </File>
+            <File>
+              <FileName>asc12.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\OLED\FONTS\asc12.c</FilePath>
+            </File>
+            <File>
+              <FileName>asc16.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\OLED\FONTS\asc16.c</FilePath>
+            </File>
+            <File>
+              <FileName>fonts.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\HARDWARE\OLED\FONTS\fonts.h</FilePath>
+            </File>
+            <File>
+              <FileName>hz12.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\OLED\FONTS\hz12.c</FilePath>
+            </File>
+            <File>
+              <FileName>hz16.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\OLED\FONTS\hz16.c</FilePath>
+            </File>
+            <File>
+              <FileName>oledfont.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\HARDWARE\OLED\FONTS\oledfont.h</FilePath>
+            </File>
+            <File>
+              <FileName>motor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\MOTOR\motor.c</FilePath>
+            </File>
+            <File>
+              <FileName>motor.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\HARDWARE\MOTOR\motor.h</FilePath>
+            </File>
+            <File>
+              <FileName>IICSoft.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\I2C\IICSoft.c</FilePath>
+            </File>
+            <File>
+              <FileName>IICSoft.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\HARDWARE\I2C\IICSoft.h</FilePath>
+            </File>
+            <File>
+              <FileName>encoder.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\MOTOR\encoder.c</FilePath>
+            </File>
+            <File>
+              <FileName>encoder.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\HARDWARE\MOTOR\encoder.h</FilePath>
+            </File>
+            <File>
+              <FileName>speed_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\MOTOR\speed_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>speed_control.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\HARDWARE\MOTOR\speed_control.h</FilePath>
             </File>
           </Files>
         </Group>

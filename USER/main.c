@@ -1,151 +1,68 @@
-/**
-  ******************************************************************************
-  * @file    Project/STM32F4xx_StdPeriph_Templates/main.c 
-  * @author  MCD Application Team
-  * @version V1.8.1
-  * @date    27-January-2022
-  * @brief   Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2016 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+#include "stm32f4xx.h"
+#include "delay.h"
+#include "oled.h"
+#include "motor.h"
+#include "encoder.h"
+#include "speed_control.h"
+#include <stdio.h>
 
-/* Includes ------------------------------------------------------------------*/
-#include "main.h"
+extern FONT_T tFont12; 
 
-/** @addtogroup Template_Project
-  * @{
-  */ 
-
-/* Private typedef -----------------------------------------------------------*/
-/* Private define ------------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
-static __IO uint32_t uwTimingDelay;
-RCC_ClocksTypeDef RCC_Clocks;
-
-/* Private function prototypes -----------------------------------------------*/
-static void Delay(__IO uint32_t nTime);
-
-/* Private functions ---------------------------------------------------------*/
-
-/**
-  * @brief  Main program
-  * @param  None
-  * @retval None
-  */
-int main(void)
-{
-  GPIO_InitTypeDef GPIO_InitStructure;
- 
- /*!< At this stage the microcontroller clock setting is already configured, 
-       this is done through SystemInit() function which is called from startup
-       files before to branch to application main.
-       To reconfigure the default setting of SystemInit() function, 
-       refer to system_stm32f4xx.c file */
-
-  /* SysTick end of count event each 10ms */
-  RCC_GetClocksFreq(&RCC_Clocks);
-  SysTick_Config(RCC_Clocks.HCLK_Frequency / 100);
-  
-  /* Add your application code here */
-  /* Insert 50 ms delay */
-  Delay(5);
-  
-  /* Output HSE clock on MCO1 pin(PA8) ****************************************/ 
-  /* Enable the GPIOA peripheral */ 
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-  
-  /* Configure MCO1 pin(PA8) in alternate function */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;  
-  GPIO_Init(GPIOA, &GPIO_InitStructure);
-    
-  /* HSE clock selected to output on MCO1 pin(PA8)*/
-  RCC_MCO1Config(RCC_MCO1Source_HSE, RCC_MCO1Div_1);
-  
-  
-  /* Output SYSCLK/4 clock on MCO2 pin(PC9) ***********************************/ 
-  /* Enable the GPIOACperipheral */ 
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
-  
-  /* Configure MCO2 pin(PC9) in alternate function */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;  
-  GPIO_Init(GPIOC, &GPIO_InitStructure);
-    
-  /* SYSCLK/4 clock selected to output on MCO2 pin(PC9)*/
-  RCC_MCO2Config(RCC_MCO2Source_SYSCLK, RCC_MCO2Div_4);
-  
-     
-  /* Infinite loop */
-  while (1)
-  {
-  }
+static void Keys_Init(void) {
+    GPIO_InitTypeDef GPIO_InitStructure;
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC | RCC_AHB1Periph_GPIOE, ENABLE);
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP; 
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13; GPIO_Init(GPIOC, &GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;  GPIO_Init(GPIOE, &GPIO_InitStructure);
 }
 
-/**
-  * @brief  Inserts a delay time.
-  * @param  nTime: specifies the delay time length, in milliseconds.
-  * @retval None
-  */
-void Delay(__IO uint32_t nTime)
-{ 
-  uwTimingDelay = nTime;
+int main(void) {
+    char line1[20], line2[20], line3[20], line4[20];
 
-  while(uwTimingDelay != 0);
+    delay_init(168);
+    OLED_Init();
+    Keys_Init();
+    MOTOR_Init();
+    ENCODER_Init();
+    SPEED_CTRL_Init();
+
+    while (1) {
+        /* ???? (????) */
+        if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_13) == Bit_RESET) {
+            delay_ms(20);
+            if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_13) == Bit_RESET) {
+                if (SPEED_CTRL_GetStatus()) SPEED_CTRL_Stop(); 
+                else                        SPEED_CTRL_Start(); 
+                while(GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_13) == Bit_RESET);
+            }
+        }
+
+        if (GPIO_ReadInputDataBit(GPIOE, GPIO_Pin_4) == Bit_RESET) {
+            delay_ms(20);
+            if (GPIO_ReadInputDataBit(GPIOE, GPIO_Pin_4) == Bit_RESET) {
+                int16_t t = SPEED_CTRL_GetTarget();
+                t += 10; if (t > 40) t = 10; 
+                SPEED_CTRL_SetTarget(t);
+                while(GPIO_ReadInputDataBit(GPIOE, GPIO_Pin_4) == Bit_RESET);
+            }
+        }
+
+        /* ?? OLED */
+        sprintf(line1, "PID:%s T:%-2d", SPEED_CTRL_GetStatus() ? "RUN " : "STOP", SPEED_CTRL_GetTarget());
+        sprintf(line2, "M1:%-2d  d1:%-2d", ENCODER_GetSpeedPulse(1), SPEED_CTRL_GetDuty(1));
+        sprintf(line3, "M2:%-2d  d2:%-2d", ENCODER_GetSpeedPulse(2), SPEED_CTRL_GetDuty(2));
+        sprintf(line4, "M3:%-2d  M4:%-2d", ENCODER_GetSpeedPulse(3), ENCODER_GetSpeedPulse(4));
+
+        OLED_StartDraw();
+        OLED_ClrScr(0x00);
+        OLED_DispStr(0, 0,  line1, &tFont12);
+        OLED_DispStr(0, 16, line2, &tFont12);
+        OLED_DispStr(0, 32, line3, &tFont12);
+        OLED_DispStr(0, 46, line4, &tFont12);
+        OLED_EndDraw();
+
+        delay_ms(100); 
+    }
 }
-
-/**
-  * @brief  Decrements the TimingDelay variable.
-  * @param  None
-  * @retval None
-  */
-void TimingDelay_Decrement(void)
-{
-  if (uwTimingDelay != 0x00)
-  { 
-    uwTimingDelay--;
-  }
-}
-
-#ifdef  USE_FULL_ASSERT
-
-/**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
-void assert_failed(uint8_t* file, uint32_t line)
-{ 
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-
-  /* Infinite loop */
-  while (1)
-  {
-  }
-}
-#endif
-
-/**
-  * @}
-  */
-
-
