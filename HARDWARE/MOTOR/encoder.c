@@ -1,99 +1,93 @@
 #include "encoder.h"
 
-#define ENCODER_MIN_EDGE_TICKS 3 // ????
-
-static volatile int32_t g_encoder_raw_pulse[4] = {0, 0, 0, 0};
-static volatile int16_t g_encoder_speed_pulse[4] = {0, 0, 0, 0};
-static volatile uint8_t g_encoder_zero_count[4] = {0, 0, 0, 0};
-
 void ENCODER_Init(void) {
     GPIO_InitTypeDef GPIO_InitStructure;
     TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
-    NVIC_InitTypeDef NVIC_InitStructure;
+    TIM_ICInitTypeDef TIM_ICInitStructure;
 
+    /* ?? ?????????????? */
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOC | RCC_AHB1Periph_GPIOD, ENABLE);
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1 | RCC_APB2Periph_TIM8, ENABLE);
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3 | RCC_APB1Periph_TIM4, ENABLE);
 
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    /* ?????? (TIM1, TIM3, TIM4, TIM8) */
+    GPIO_PinAFConfig(GPIOA, GPIO_PinSource8, GPIO_AF_TIM1);  GPIO_PinAFConfig(GPIOA, GPIO_PinSource9, GPIO_AF_TIM1);
+    GPIO_PinAFConfig(GPIOD, GPIO_PinSource12, GPIO_AF_TIM4); GPIO_PinAFConfig(GPIOD, GPIO_PinSource13, GPIO_AF_TIM4);
+    GPIO_PinAFConfig(GPIOA, GPIO_PinSource6, GPIO_AF_TIM3);  GPIO_PinAFConfig(GPIOA, GPIO_PinSource7, GPIO_AF_TIM3);
+    GPIO_PinAFConfig(GPIOC, GPIO_PinSource6, GPIO_AF_TIM8);  GPIO_PinAFConfig(GPIOC, GPIO_PinSource7, GPIO_AF_TIM8);
 
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9;
-    GPIO_Init(GPIOA, &GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12 | GPIO_Pin_13;
-    GPIO_Init(GPIOD, &GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
-    GPIO_Init(GPIOC, &GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF;
+    GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
 
-    TIM_TimeBaseStructure.TIM_Period = 100 - 1; 
-    TIM_TimeBaseStructure.TIM_Prescaler = 84 - 1; 
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9; GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12 | GPIO_Pin_13; GPIO_Init(GPIOD, &GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;   GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+    /* ?? 4 ??????????? */
+    TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);
+    TIM_TimeBaseStructure.TIM_Period    = 65535;
+    TIM_TimeBaseStructure.TIM_Prescaler = 0;
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
-    TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-    TIM_TimeBaseInit(TIM5, &TIM_TimeBaseStructure);
+    TIM_TimeBaseStructure.TIM_CounterMode   = TIM_CounterMode_Up;
 
-    TIM_ClearITPendingBit(TIM5, TIM_IT_Update);
-    TIM_ITConfig(TIM5, TIM_IT_Update, ENABLE);
+    TIM_TimeBaseInit(TIM1, &TIM_TimeBaseStructure);
+    TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
+    TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
+    TIM_TimeBaseInit(TIM8, &TIM_TimeBaseStructure);
 
-    NVIC_InitStructure.NVIC_IRQChannel = TIM5_IRQn;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0; 
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-    NVIC_Init(&NVIC_InitStructure);
+    TIM_EncoderInterfaceConfig(TIM1, TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Rising);
+    TIM_EncoderInterfaceConfig(TIM3, TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Rising);
+    TIM_EncoderInterfaceConfig(TIM4, TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Rising);
+    TIM_EncoderInterfaceConfig(TIM8, TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Rising);
 
-    TIM_Cmd(TIM5, ENABLE);
+    /* ?? ????:? 4 ?????????? 15 ?(??)???????,????????????! */
+    TIM_ICStructInit(&TIM_ICInitStructure);
+    TIM_ICInitStructure.TIM_ICFilter = 15; 
+    
+    TIM_ICInitStructure.TIM_Channel = TIM_Channel_1;
+    TIM_ICInit(TIM1, &TIM_ICInitStructure); TIM_ICInit(TIM3, &TIM_ICInitStructure);
+    TIM_ICInit(TIM4, &TIM_ICInitStructure); TIM_ICInit(TIM8, &TIM_ICInitStructure);
+    
+    TIM_ICInitStructure.TIM_Channel = TIM_Channel_2;
+    TIM_ICInit(TIM1, &TIM_ICInitStructure); TIM_ICInit(TIM3, &TIM_ICInitStructure);
+    TIM_ICInit(TIM4, &TIM_ICInitStructure); TIM_ICInit(TIM8, &TIM_ICInitStructure);
+
+    TIM_SetCounter(TIM1, 0); TIM_SetCounter(TIM3, 0);
+    TIM_SetCounter(TIM4, 0); TIM_SetCounter(TIM8, 0);
+
+    TIM_Cmd(TIM1, ENABLE); TIM_Cmd(TIM3, ENABLE);
+    TIM_Cmd(TIM4, ENABLE); TIM_Cmd(TIM8, ENABLE);
 }
 
-void TIM5_IRQHandler(void) {
-    if (TIM_GetITStatus(TIM5, TIM_IT_Update) != RESET) {
-        TIM_ClearITPendingBit(TIM5, TIM_IT_Update);
-        
-        uint8_t a[4], b[4];
-        static uint8_t last_a[4] = {0,0,0,0};
-        static uint8_t guard[4] = {0,0,0,0}; 
-        
-        a[0] = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_8); b[0] = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_9);
-        a[1] = GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_12); b[1] = GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_13);
-        a[2] = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_7); b[2] = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_6);
-        a[3] = GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_6); b[3] = GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_7);
+static volatile int16_t g_speed_pulse[4] = {0,0,0,0};
 
-        for (int i = 0; i < 4; i++) {
-            if (guard[i] > 0) guard[i]--; 
-            
-            if (a[i] != last_a[i]) { 
-                if (guard[i] == 0) {
-                    if (a[i] != b[i]) g_encoder_raw_pulse[i] += 1;
-                    else              g_encoder_raw_pulse[i] -= 1;
-                    guard[i] = ENCODER_MIN_EDGE_TICKS; 
-                    last_a[i] = a[i]; 
-                }
-            }
-        }
-    }
-}
-
+/* 50ms ????????? */
 void ENCODER_Update(void) {
+    int16_t raw[4];
+    
+    /* ?? ??????? */
+    raw[0] = (int16_t)TIM_GetCounter(TIM1); TIM_SetCounter(TIM1, 0); // M1
+    raw[1] = (int16_t)TIM_GetCounter(TIM4); TIM_SetCounter(TIM4, 0); // M2
+    raw[2] = (int16_t)TIM_GetCounter(TIM3); TIM_SetCounter(TIM3, 0); // M3
+    raw[3] = (int16_t)TIM_GetCounter(TIM8); TIM_SetCounter(TIM8, 0); // M4
+
     for (int i = 0; i < 4; i++) {
-        int16_t speed = g_encoder_raw_pulse[i];
-        g_encoder_raw_pulse[i] = 0; 
-        
-        /* ?? ??????:????????,????????????????!
-           ?????? PID ???????,??????! */
-        if (speed < 0) {
-            speed = -speed; 
-        }
-        
+        /* ?????? */
+        int16_t speed = raw[i];
+        if (i == 0 || i == 1 || i == 2) speed = -speed; // ????
+
+        if (speed < 0) speed = -speed; // ????
+
         if (speed == 0) {
-            if (g_encoder_zero_count[i] < 255) g_encoder_zero_count[i]++;
-            if ((g_encoder_speed_pulse[i] > 0) && (g_encoder_zero_count[i] <= 5)) g_encoder_speed_pulse[i]--;
-            else g_encoder_speed_pulse[i] = 0;
+            g_speed_pulse[i] = 0;
         } else {
-            g_encoder_zero_count[i] = 0;
-            g_encoder_speed_pulse[i] = (int16_t)((g_encoder_speed_pulse[i] * 2 + speed + 1) / 3);
+            g_speed_pulse[i] = (int16_t)((g_speed_pulse[i] * 2 + speed + 1) / 3); // ??????
         }
     }
 }
 
 int16_t ENCODER_GetSpeedPulse(uint8_t motor) {
-    if (motor>=1 && motor<=4) return g_encoder_speed_pulse[motor - 1];
+    if (motor>=1 && motor<=4) return g_speed_pulse[motor - 1];
     return 0;
 }

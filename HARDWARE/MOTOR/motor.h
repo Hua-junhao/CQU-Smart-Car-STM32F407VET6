@@ -1,6 +1,7 @@
 #ifndef __MOTOR_H
 #define __MOTOR_H
 #include "stm32f4xx.h"
+#include <stdint.h>
 
 #define MOTOR1_PWM_PORT GPIOB
 #define MOTOR1_PWM_PIN  GPIO_Pin_13
@@ -34,5 +35,8 @@ void MOTOR_Init(void);
 void MOTOR_SetDuty(uint8_t motor, uint16_t duty_percent);
 void MOTOR_SetAllDuty(uint16_t duty_percent);
 void MOTOR_StopAll(void);
+
+/* ?? ????:????????,??????????? */
+void MOTOR_SetDirectionDynamic(uint8_t motor, uint8_t direction); 
 
 #endif

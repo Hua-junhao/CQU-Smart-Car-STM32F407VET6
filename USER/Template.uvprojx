@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F40_41xxx,USE_STDPERIPH_DRIVER,HSE_VALUE=8000000</Define>
               <Undefine></Undefine>
-              <IncludePath>..\SYSTEM\sys;..\SYSTEM\delay;..\CORE;..\FWLIB\inc;..\SYSTEM\usart;..\USER;..\HARDWARE\MOTOR;..\HARDWARE\OLED;..\HARDWARE\OLED\FONTS;..\HARDWARE\I2C;..\HARDWARE\LINE;..\HARDWARE\SERVO;..\HARDWARE\ULTRASONIC</IncludePath>
+              <IncludePath>..\SYSTEM\sys;..\SYSTEM\delay;..\CORE;..\FWLIB\inc;..\SYSTEM\usart;..\USER;..\HARDWARE\MOTOR;..\HARDWARE\OLED;..\HARDWARE\OLED\FONTS;..\HARDWARE\I2C;..\HARDWARE\LINE;..\HARDWARE\SERVO;..\HARDWARE\ULTRASONIC;..\HARDWARE\OBSTACLE</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -753,6 +753,26 @@
               <FileName>ultrasonic.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\HARDWARE\ULTRASONIC\ultrasonic.h</FilePath>
+            </File>
+            <File>
+              <FileName>obstacle.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\OBSTACLE\obstacle.c</FilePath>
+            </File>
+            <File>
+              <FileName>obstacle.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\HARDWARE\OBSTACLE\obstacle.h</FilePath>
+            </File>
+            <File>
+              <FileName>line_sensor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\LINE\line_sensor.c</FilePath>
+            </File>
+            <File>
+              <FileName>line_sensor.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\HARDWARE\LINE\line_sensor.h</FilePath>
             </File>
           </Files>
         </Group>
