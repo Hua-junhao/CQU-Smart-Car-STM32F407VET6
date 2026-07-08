@@ -338,9 +338,9 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>STM32F40_41xxx,USE_STDPERIPH_DRIVER</Define>
+              <Define>STM32F40_41xxx,USE_STDPERIPH_DRIVER,HSE_VALUE=8000000</Define>
               <Undefine></Undefine>
-              <IncludePath>..\SYSTEM\sys;..\SYSTEM\delay;..\CORE;..\FWLIB\inc;..\SYSTEM\usart;..\USER;..\HARDWARE\MOTOR;..\HARDWARE\OLED;..\HARDWARE\OLED\FONTS;..\HARDWARE\I2C;..\HARDWARE\LINE</IncludePath>
+              <IncludePath>..\SYSTEM\sys;..\SYSTEM\delay;..\CORE;..\FWLIB\inc;..\SYSTEM\usart;..\USER;..\HARDWARE\MOTOR;..\HARDWARE\OLED;..\HARDWARE\OLED\FONTS;..\HARDWARE\I2C;..\HARDWARE\LINE;..\HARDWARE\SERVO;..\HARDWARE\ULTRASONIC</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -733,6 +733,26 @@
               <FileName>speed_control.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\HARDWARE\MOTOR\speed_control.h</FilePath>
+            </File>
+            <File>
+              <FileName>servo.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\SERVO\servo.c</FilePath>
+            </File>
+            <File>
+              <FileName>servo.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\HARDWARE\SERVO\servo.h</FilePath>
+            </File>
+            <File>
+              <FileName>ultrasonic.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\ULTRASONIC\ultrasonic.c</FilePath>
+            </File>
+            <File>
+              <FileName>ultrasonic.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\HARDWARE\ULTRASONIC\ultrasonic.h</FilePath>
             </File>
           </Files>
         </Group>
