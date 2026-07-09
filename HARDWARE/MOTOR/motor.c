@@ -12,6 +12,13 @@ static void MOTOR_GPIO_Write(GPIO_TypeDef *port, uint16_t pin, uint8_t state) {
     else        GPIO_ResetBits(port, pin);
 }
 
+static void MOTOR_SetPWMPins(uint8_t m1, uint8_t m2, uint8_t m3, uint8_t m4) {
+    MOTOR_GPIO_Write(MOTOR1_PWM_PORT, MOTOR1_PWM_PIN, m1);
+    MOTOR_GPIO_Write(MOTOR2_PWM_PORT, MOTOR2_PWM_PIN, m2);
+    MOTOR_GPIO_Write(MOTOR3_PWM_PORT, MOTOR3_PWM_PIN, m3);
+    MOTOR_GPIO_Write(MOTOR4_PWM_PORT, MOTOR4_PWM_PIN, m4);
+}
+
 static uint8_t MOTOR_DutyToStep(uint16_t duty_percent) {
     if (duty_percent > 100) duty_percent = 100;
     uint16_t duty_step = (duty_percent * MOTOR_PWM_STEPS + 50) / 100;
@@ -57,36 +64,35 @@ static void MOTOR_ControlGPIO_Init(void) {
 static void MOTOR_SetDirection(void) {
     MOTOR_GPIO_Write(MOTOR1_DIR_PORT, MOTOR1_DIR_PIN, 0); 
     MOTOR_GPIO_Write(MOTOR2_DIR_PORT, MOTOR2_DIR_PIN, 0); 
-    MOTOR_GPIO_Write(MOTOR3_DIR_PORT, MOTOR3_DIR_PIN, 0); 
-    MOTOR_GPIO_Write(MOTOR4_DIR_PORT, MOTOR4_DIR_PIN, 0); 
+    MOTOR_GPIO_Write(MOTOR3_DIR_PORT, MOTOR3_DIR_PIN, 1); 
+    MOTOR_GPIO_Write(MOTOR4_DIR_PORT, MOTOR4_DIR_PIN, 1); 
 }
 
 void MOTOR_SetDirectionDynamic(uint8_t motor, uint8_t direction) {
     if (motor >= 1 && motor <= 4) g_motor_direction[motor - 1] = direction;
 }
 
-/* ?? ???????????? TIM5 ????? */
-static void MOTOR_TIM5_Init(void) {
+static void MOTOR_TIM3_Init(void) {
     TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
     NVIC_InitTypeDef NVIC_InitStructure;
 
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE);
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
     TIM_TimeBaseStructure.TIM_Period        = MOTOR_PWM_TICK_US - 1;
     TIM_TimeBaseStructure.TIM_Prescaler     = 84 - 1; 
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseStructure.TIM_CounterMode   = TIM_CounterMode_Up;
-    TIM_TimeBaseInit(TIM5, &TIM_TimeBaseStructure);
+    TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
 
-    TIM_ClearITPendingBit(TIM5, TIM_IT_Update);
-    TIM_ITConfig(TIM5, TIM_IT_Update, ENABLE);
+    TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
+    TIM_ITConfig(TIM3, TIM_IT_Update, ENABLE);
 
-    NVIC_InitStructure.NVIC_IRQChannel                   = TIM5_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannel                   = TIM3_IRQn;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 1;
     NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
 
-    TIM_Cmd(TIM5, ENABLE);
+    TIM_Cmd(TIM3, ENABLE);
 }
 
 void MOTOR_Init(void) {
@@ -95,7 +101,7 @@ void MOTOR_Init(void) {
     MOTOR_SetDirection();
     MOTOR_StopAll();
     MOTOR_EnableAll();
-    MOTOR_TIM5_Init();
+    MOTOR_TIM3_Init();
 }
 
 void MOTOR_SetDuty(uint8_t motor, uint16_t duty_percent) {
@@ -116,27 +122,25 @@ void MOTOR_StopAll(void) {
     g_motor_direction[0] = 0; g_motor_direction[1] = 0; g_motor_direction[2] = 0; g_motor_direction[3] = 0;
 }
 
-/* TIM5 ?????? PWM */
-void TIM5_IRQHandler(void) {
-    if (TIM_GetITStatus(TIM5, TIM_IT_Update) != RESET) {
-        TIM_ClearITPendingBit(TIM5, TIM_IT_Update);
+/* ?? TIM3 ?????? */
+void TIM3_IRQHandler(void) {
+    if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET) {
+        TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
         
         uint8_t pwm[4];
         for (int i = 0; i < 4; i++) {
             pwm[i] = (g_motor_pwm_step < g_motor_duty_step[i]) ? 1 : 0;
         }
 
-        /* M1, M2 */
+        /* ??? M1, M2 */
         if (g_motor_direction[0] == 0) { MOTOR_GPIO_Write(MOTOR1_PWM_PORT, MOTOR1_PWM_PIN, pwm[0]); MOTOR_GPIO_Write(MOTOR1_DIR_PORT, MOTOR1_DIR_PIN, 0); }
         else                           { MOTOR_GPIO_Write(MOTOR1_PWM_PORT, MOTOR1_PWM_PIN, 0);      MOTOR_GPIO_Write(MOTOR1_DIR_PORT, MOTOR1_DIR_PIN, pwm[0]); }
         if (g_motor_direction[1] == 0) { MOTOR_GPIO_Write(MOTOR2_PWM_PORT, MOTOR2_PWM_PIN, pwm[1]); MOTOR_GPIO_Write(MOTOR2_DIR_PORT, MOTOR2_DIR_PIN, 0); }
         else                           { MOTOR_GPIO_Write(MOTOR2_PWM_PORT, MOTOR2_PWM_PIN, 0);      MOTOR_GPIO_Write(MOTOR2_DIR_PORT, MOTOR2_DIR_PIN, pwm[1]); }
 
-        /* M3 (??????) */
+        /* ??? M3, M4 */
         if (g_motor_direction[2] == 0) { MOTOR_GPIO_Write(MOTOR3_PWM_PORT, MOTOR3_PWM_PIN, 0);      MOTOR_GPIO_Write(MOTOR3_DIR_PORT, MOTOR3_DIR_PIN, pwm[2]); }
         else                           { MOTOR_GPIO_Write(MOTOR3_PWM_PORT, MOTOR3_PWM_PIN, pwm[2]); MOTOR_GPIO_Write(MOTOR3_DIR_PORT, MOTOR3_DIR_PIN, 0); }
-
-        /* M4 */
         if (g_motor_direction[3] == 0) { MOTOR_GPIO_Write(MOTOR4_PWM_PORT, MOTOR4_PWM_PIN, 0);      MOTOR_GPIO_Write(MOTOR4_DIR_PORT, MOTOR4_DIR_PIN, pwm[3]); }
         else                           { MOTOR_GPIO_Write(MOTOR4_PWM_PORT, MOTOR4_PWM_PIN, pwm[3]); MOTOR_GPIO_Write(MOTOR4_DIR_PORT, MOTOR4_DIR_PIN, 0); }
 

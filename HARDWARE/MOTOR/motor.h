@@ -33,10 +33,6 @@
 
 void MOTOR_Init(void);
 void MOTOR_SetDuty(uint8_t motor, uint16_t duty_percent);
-void MOTOR_SetAllDuty(uint16_t duty_percent);
 void MOTOR_StopAll(void);
-
-/* ?? ????:????????,??????????? */
-void MOTOR_SetDirectionDynamic(uint8_t motor, uint8_t direction); 
-
+void MOTOR_SetDirectionDynamic(uint8_t motor, uint8_t direction);
 #endif
